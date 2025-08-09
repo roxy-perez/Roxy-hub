@@ -1,0 +1,53 @@
+services:
+    laravel.test:
+        build:
+            context: './vendor/laravel/sail/runtimes/8.4'
+            dockerfile: Dockerfile
+            args:
+                WWWGROUP: '${WWWGROUP}'
+        image: sail-8.4/app
+        container_name: roxyhub_app
+        extra_hosts:
+            - 'host.docker.internal:host-gateway'
+        ports:
+            - '${APP_PORT:-80}:80'
+            - '${VITE_PORT:-5173}:${VITE_PORT:-5173}'
+        environment:
+            WWWUSER: '${WWWUSER}'
+            LARAVEL_SAIL: 1
+            XDEBUG_MODE: '${SAIL_XDEBUG_MODE:-off}'
+            XDEBUG_CONFIG: '${SAIL_XDEBUG_CONFIG:-client_host=host.docker.internal}'
+            IGNITION_LOCAL_SITES_PATH: '${PWD}'
+        volumes:
+            - '.:/var/www/html'
+        depends_on:
+            - db
+            - redis
+    db:
+        image: postgres:16
+        environment:
+            POSTGRES_DB: '${DB_DATABASE:-roxyhub}'
+            POSTGRES_USER: '${DB_USERNAME:-roxyhub}'
+            POSTGRES_PASSWORD: '${DB_PASSWORD:-secret}'
+        ports:
+            -   '${DB_PORT:-5432}:5432'
+        volumes:
+            - db_data:/var/lib/postgresql/data
+
+    redis:
+        image: redis:7
+        volumes: [ ]
+
+    nas:
+        build:
+            context: ./docker/nas
+        container_name: roxyhub_nas
+        ports:
+            - "5001:5000"
+        volumes:
+            - ./nas_data:/mnt/nas
+        environment:
+            - API_TOKEN='${NAS_API_TOKEN:-your_api_token}'
+
+volumes:
+        db_data:
