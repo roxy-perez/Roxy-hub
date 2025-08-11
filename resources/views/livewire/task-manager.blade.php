@@ -1,0 +1,575 @@
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+    <!-- Header -->
+    <div class="mb-8">
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900 font-serif dark:text-white">Gestión de tareas</h1>
+                <p class="mt-2 text-sm text-gray-600 font-sans dark:text-gray-400 ">Administra y rastrea tus tareas de
+                    proyecto de manera
+                    eficiente</p>
+            </div>
+            <div class="mt-4 sm:mt-0">
+                <button wire:click="showCreateForm"
+                    class="inline-flex items-center px-4 py-2 bg-pink-600 border border-transparent rounded-md font-semibold text-xs  font-mono text-white uppercase tracking-widest hover:bg-pink-700 focus:bg-pink-700 active:bg-pink-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    Crear Tarea
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Flash Messages -->
+    @if (session()->has('message'))
+        <div class="mb-6 bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded relative" role="alert">
+            <span class="block sm:inline">{{ session('message') }}</span>
+        </div>
+    @endif
+
+    <!-- Filters and Search -->
+    <div class="bg-gray-100 rounded-lg shadow-sm border border-gray-200 p-6 mb-6 dark:bg-gray-800 dark:border-gray-700">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
+            <!-- Search -->
+            <div class="lg:col-span-2">
+                <label for="search"
+                    class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Buscar</label>
+                <input wire:model.live="search" type="text" id="search"
+                    class="w-full rounded-md dark:bg-gray-200 dark:text-gray-800 border-gray-300 shadow-sm focus:border-pink-500 focus:ring-pink-500"
+                    placeholder="Buscar tareas...">
+            </div>
+
+            <!-- Status Filter -->
+            <div>
+                <label for="filterStatus"
+                    class="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Estados</label>
+                <select wire:model.live="filterStatus" id="filterStatus"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">Todos los estados</option>
+                    <option value="todo">Pendiente</option>
+                    <option value="in_progress">En curso</option>
+                    <option value="blocked">Bloqueado</option>
+                    <option value="done">Hecho</option>
+                </select>
+            </div>
+
+            <!-- Priority Filter -->
+            <div>
+                <label for="filterPriority"
+                    class="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Prioridad</label>
+                <select wire:model.live="filterPriority" id="filterPriority"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">Todas las prioridades</option>
+                    <option value="1">Crítico</option>
+                    <option value="2">Alta</option>
+                    <option value="3">Media</option>
+                    <option value="4">Baja</option>
+                    <option value="5">Muy baja</option>
+                </select>
+            </div>
+
+            <!-- Project Filter -->
+            <div>
+                <label for="filterProject"
+                    class="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Proyectos</label>
+                <select wire:model.live="filterProject" id="filterProject"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">Todos los proyectos</option>
+                    @foreach ($projects as $project)
+                        <option value="{{ $project->id }}">{{ $project->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+
+            <!-- Assignee Filter -->
+            <div>
+                <label for="filterAssignee"
+                    class="block text-sm font-medium text-gray-700 mb-1 dark:text-gray-300">Asignados</label>
+                <select wire:model.live="filterAssignee" id="filterAssignee"
+                    class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                    <option value="">Todos los asignados</option>
+                    @foreach ($users as $user)
+                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                    @endforeach
+                </select>
+            </div>
+        </div>
+
+        <!-- Clear Filters -->
+        <div class="mt-4 flex justify-end">
+            <button wire:click="clearFilters" class="text-sm text-gray-600 hover:text-gray-900 underline">
+                Limpiar filtros
+            </button>
+        </div>
+    </div>
+
+    <!-- Tasks Table -->
+    <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+        <div class="overflow-x-auto">
+            <table class="min-w-full divide-y divide-gray-200">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th wire:click="sortBy('title')"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                            <div class="flex items-center space-x-1">
+                                <span>Tarea</span>
+                                @if ($sortBy === 'title')
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        @if ($sortDirection === 'asc')
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 15l7-7 7 7"></path>
+                                        @else
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 9l-7 7-7-7"></path>
+                                        @endif
+                                    </svg>
+                                @endif
+                            </div>
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Proyecto
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Estado
+                        </th>
+                        <th wire:click="sortBy('priority')"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                            <div class="flex items-center space-x-1">
+                                <span>Prioridad</span>
+                                @if ($sortBy === 'priority')
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        @if ($sortDirection === 'asc')
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 15l7-7 7 7"></path>
+                                        @else
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 9l-7 7-7-7"></path>
+                                        @endif
+                                    </svg>
+                                @endif
+                            </div>
+                        </th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Asignado
+                        </th>
+                        <th wire:click="sortBy('due_date')"
+                            class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider cursor-pointer hover:bg-gray-100">
+                            <div class="flex items-center space-x-1">
+                                <span>Fecha límite</span>
+                                @if ($sortBy === 'due_date')
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        @if ($sortDirection === 'asc')
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M5 15l7-7 7 7"></path>
+                                        @else
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 9l-7 7-7-7"></path>
+                                        @endif
+                                    </svg>
+                                @endif
+                            </div>
+                        </th>
+                        <th class="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                            Acciones
+                        </th>
+                    </tr>
+                </thead>
+                <tbody class="bg-white divide-y divide-gray-200">
+                    @forelse($tasks as $task)
+                        <tr class="hover:bg-pink-50">
+                            <td class="px-6 py-4">
+                                <div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $task->title }}</div>
+                                    @if ($task->description)
+                                        <div class="text-sm text-gray-500 mt-1">
+                                            {{ Str::limit($task->description, 60) }}</div>
+                                    @endif
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span class="text-sm text-gray-900">{{ $task->project->name }}</span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <div class="flex items-center space-x-2">
+                                    <span
+                                        class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $task->status_color }}">
+                                        {{ $task->status_label }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                <span
+                                    class="inline-flex px-2 py-1 text-xs font-semibold rounded-full {{ $task->priority_color }}">
+                                    {{ $task->priority_label }}
+                                </span>
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap">
+                                @if ($task->assignee)
+                                    <div class="flex items-center">
+                                        <div class="flex-shrink-0 h-8 w-8">
+                                            <div
+                                                class="h-8 w-8 rounded-full bg-gray-300 flex items-center justify-center">
+                                                <span class="text-xs font-medium text-gray-700">
+                                                    {{ substr($task->assignee->name, 0, 2) }}
+                                                </span>
+                                            </div>
+                                        </div>
+                                        <div class="ml-3">
+                                            <div class="text-sm font-medium text-gray-900">{{ $task->assignee->name }}
+                                            </div>
+                                        </div>
+                                    </div>
+                                @else
+                                    <span class="text-xs rounded-full p-2 bg-gray-200 font-bold text-gray-500">Sin
+                                        asignar</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                                @if ($task->due_date)
+                                    <div class="flex items-center">
+                                        @if ($task->due_date->isPast() && $task->status !== 'done')
+                                            <svg class="w-4 h-4 text-red-500 mr-1" fill="none"
+                                                stroke="currentColor" viewBox="0 0 24 24">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                                            </svg>
+                                        @endif
+                                        <span
+                                            class="{{ $task->due_date->isPast() && $task->status !== 'done' ? 'text-red-600' : '' }}">
+                                            {{ $task->due_date->format('d/m/Y') }}
+                                        </span>
+                                    </div>
+                                @else
+                                    <span class=" text-gray-500">Sin fecha</span>
+                                @endif
+                            </td>
+                            <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                                <div class="flex items-center justify-end space-x-2">
+                                    <button wire:click="editTask({{ $task->id }})"
+                                        class="text-blue-600 hover:text-blue-900">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                            </path>
+                                        </svg>
+                                    </button>
+                                    <button wire:click="deleteTask({{ $task->id }})"
+                                        wire:confirm="¿Seguro que desea eliminar la tarea {{ $task->title }}?"
+                                        class="text-red-600 hover:text-red-900">
+                                        <svg class="w-4 h-4" fill="none" stroke="currentColor"
+                                            viewBox="0 0 24 24">
+                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                            </path>
+                                        </svg>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    @empty
+                        <tr>
+                            <td colspan="7" class="px-6 py-12 text-center">
+                                <div class="flex flex-col items-center">
+                                    <svg class="w-12 h-12 text-gray-400 mb-4" fill="none" stroke="currentColor"
+                                        viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M9 5H7a2 2 0 00-2 2v10a2 2 0 002 2h8a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2">
+                                        </path>
+                                    </svg>
+                                    <h3 class="text-lg font-medium text-gray-900 mb-2">No tareas encontradas</h3>
+                                    <p class="text-gray-500 mb-4">Comienza creando tu primera tarea.</p>
+                                    <button wire:click="showCreateForm"
+                                        class="inline-flex items-center px-4 py-2 bg-blue-600 border border-transparent rounded-md font-semibold text-xs text-white uppercase tracking-widest hover:bg-blue-700">
+                                        Create Task
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                    @endforelse
+                </tbody>
+            </table>
+        </div>
+
+        <!-- Pagination -->
+        @if ($tasks->hasPages())
+            <div class="px-6 py-3 border-t border-gray-200">
+                {{ $tasks->links() }}
+            </div>
+        @endif
+    </div>
+
+    <!-- Create Task Modal -->
+    @if ($showCreateForm)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+            aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="hideCreateForm">
+                </div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div
+                    class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <form wire:submit="createTask">
+                        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                            <div class="mb-4">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">Create New Task</h3>
+
+                                <!-- Title -->
+                                <div class="mb-4">
+                                    <label for="title" class="block text-sm font-medium text-gray-700 mb-1">Title
+                                        *</label>
+                                    <input wire:model="title" type="text" id="title"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        placeholder="Enter task title">
+                                    @error('title')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <!-- Description -->
+                                <div class="mb-4">
+                                    <label for="description"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                                    <textarea wire:model="description" id="description" rows="3"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        placeholder="Enter task description"></textarea>
+                                    @error('description')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <!-- Project -->
+                                <div class="mb-4">
+                                    <label for="project_id"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Proyecto *</label>
+                                    <select wire:model="project_id" id="project_id"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <option value="">Selecciona un proyecto</option>
+                                        @foreach ($projects as $project)
+                                            <option value="{{ $project->id }}">{{ $project->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('project_id')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <!-- Status -->
+                                    <div>
+                                        <label for="status"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                                        <select wire:model="status" id="status"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                            <option value="todo">To Do</option>
+                                            <option value="in_progress">In Progress</option>
+                                            <option value="blocked">Blocked</option>
+                                            <option value="done">Done</option>
+                                        </select>
+                                        @error('status')
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Priority -->
+                                    <div>
+                                        <label for="priority"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
+                                        <select wire:model="priority" id="priority"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                            <option value="1">Crítica</option>
+                                            <option value="2">Alta</option>
+                                            <option value="3">Media</option>
+                                            <option value="4">Baja</option>
+                                            <option value="5">Muy Baja</option>
+                                        </select>
+                                        @error('priority')
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <!-- Assignee -->
+                                    <div>
+                                        <label for="assignee_id"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Asignado</label>
+                                        <select wire:model="assignee_id" id="assignee_id"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                            <option value="">No asignado</option>
+                                            @foreach ($users as $user)
+                                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('assignee_id')
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Due Date -->
+                                    <div>
+                                        <label for="due_date"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Fecha
+                                            Límite</label>
+                                        <input wire:model="due_date" type="date" id="due_date"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        @error('due_date')
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                            <button type="submit"
+                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                                Create Task
+                            </button>
+                            <button type="button" wire:click="hideCreateForm"
+                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+
+    <!-- Edit Task Modal -->
+    @if ($showEditForm)
+        <div class="fixed inset-0 z-50 overflow-y-auto" aria-labelledby="modal-title" role="dialog"
+            aria-modal="true">
+            <div class="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
+                <div class="fixed inset-0 bg-gray-500 bg-opacity-75 transition-opacity" wire:click="hideEditForm">
+                </div>
+                <span class="hidden sm:inline-block sm:align-middle sm:h-screen" aria-hidden="true">&#8203;</span>
+                <div
+                    class="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-lg sm:w-full">
+                    <form wire:submit="updateTask">
+                        <div class="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+                            <div class="mb-4">
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">Edit Task</h3>
+
+                                <!-- Title -->
+                                <div class="mb-4">
+                                    <label for="edit_title"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Título
+                                        *</label>
+                                    <input wire:model="title" type="text" id="edit_title"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        placeholder="Enter task title">
+                                    @error('title')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <!-- Description -->
+                                <div class="mb-4">
+                                    <label for="edit_description"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Descripción</label>
+                                    <textarea wire:model="description" id="edit_description" rows="3"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+                                        placeholder="Enter task description"></textarea>
+                                    @error('description')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <!-- Project -->
+                                <div class="mb-4">
+                                    <label for="edit_project_id"
+                                        class="block text-sm font-medium text-gray-700 mb-1">Proyecto *</label>
+                                    <select wire:model="project_id" id="edit_project_id"
+                                        class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        <option value="">Asignar proyecto</option>
+                                        @foreach ($projects as $project)
+                                            <option value="{{ $project->id }}">{{ $project->name }}</option>
+                                        @endforeach
+                                    </select>
+                                    @error('project_id')
+                                        <span class="text-red-500 text-xs">{{ $message }}</span>
+                                    @enderror
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <!-- Status -->
+                                    <div>
+                                        <label for="edit_status"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Estado</label>
+                                        <select wire:model="status" id="edit_status"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                            <option value="todo">Pendiente</option>
+                                            <option value="in_progress">En progreso</option>
+                                            <option value="blocked">Bloqueado</option>
+                                            <option value="done">Completado</option>
+                                        </select>
+                                        @error('status')
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Priority -->
+                                    <div>
+                                        <label for="edit_priority"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Prioridad</label>
+                                        <select wire:model="priority" id="edit_priority"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                            <option value="1">Crítico</option>
+                                            <option value="2">Alta</option>
+                                            <option value="3">Media</option>
+                                            <option value="4">Baja</option>
+                                            <option value="5">Muy baja</option>
+                                        </select>
+                                        @error('priority')
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4">
+                                    <!-- Assignee -->
+                                    <div>
+                                        <label for="edit_assignee_id"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Asignado a</label>
+                                        <select wire:model="assignee_id" id="edit_assignee_id"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                            <option value="">No asignado</option>
+                                            @foreach ($users as $user)
+                                                <option value="{{ $user->id }}">{{ $user->name }}</option>
+                                            @endforeach
+                                        </select>
+                                        @error('assignee_id')
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+
+                                    <!-- Due Date -->
+                                    <div>
+                                        <label for="edit_due_date"
+                                            class="block text-sm font-medium text-gray-700 mb-1">Fecha límite</label>
+                                        <input wire:model="due_date" type="date" id="edit_due_date"
+                                            class="w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500">
+                                        @error('due_date')
+                                            <span class="text-red-500 text-xs">{{ $message }}</span>
+                                        @enderror
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
+                            <button type="submit"
+                                class="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-blue-600 text-base font-medium text-white hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:ml-3 sm:w-auto sm:text-sm">
+                                Update Task
+                            </button>
+                            <button type="button" wire:click="hideEditForm"
+                                class="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+                                Cancel
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    @endif
+</div>

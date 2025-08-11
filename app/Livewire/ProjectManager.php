@@ -151,6 +151,7 @@ class ProjectManager extends Component
         $this->alert('warning', '¿Estás segura de eliminar este proyecto?', [
             'showConfirmButton' => true,
             'confirmButtonText' => 'Sí, eliminar',
+            'showCancelButton' => true,
             'cancelButtonText' => 'Cancelar',
             'onConfirmed' => 'confirmDelete',
             'data' => ['id' => $id],

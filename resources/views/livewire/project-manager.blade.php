@@ -26,7 +26,10 @@
             </select>
             <div class="flex items-center gap-2">
                 <button type="submit"
-                    class="bg-pink-600 hover:bg-pink-700 text-white px-5 py-2 rounded-lg font-semibold font-sans shadow transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-pink-500 dark:focus:ring-offset-gray-800">
+                    class="inline-flex items-center px-4 py-2 bg-pink-600 border border-transparent rounded-md font-semibold text-xs  font-mono text-white uppercase tracking-widest hover:bg-pink-700 focus:bg-pink-700 active:bg-pink-900 focus:outline-none focus:ring-2 focus:ring-pink-500 focus:ring-offset-2 transition ease-in-out duration-150">
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
                     {{ $editingId ? 'Guardar cambios' : 'Crear' }}
                 </button>
                 @if ($editingId)
@@ -87,20 +90,20 @@
                         <td class="py-3 px-4 border-b border-gray-100 dark:border-gray-800">
                             <div class="flex items-center gap-2">
                                 <button type="button" wire:click="startEdit({{ $project->id }})"
-                                    class="bg-blue-500 hover:bg-blue-600 text-white rounded-full text-center text-xs font-semibold px-3 py-1 shadow transition focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-400 dark:focus:ring-offset-gray-800">
-                                    Editar
-                                </button>
-                                <button type="button" wire:click="preDelete({{ $project->id }})"
-                                    class="bg-red-500 hover:bg-red-700 text-white rounded-full text-center text-xs font-semibold px-2 shadow transition py-1 font-mono focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-red-400 flex justify-center items-center dark:focus:ring-offset-gray-800 ">
-                                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18"
-                                        fill="currentColor" viewBox="0 0 24 24">
-                                        <g>
-                                            <path fill="none" d="M0 0h24v24H0z" />
-                                            <path
-                                                d="M7 6V3a1 1 0 0 1 1-1h8a1 1 0 0 1 1 1v3h5v2h-2v13a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V8H2V6h5zm6.414 8l1.768-1.768-1.414-1.414L12 12.586l-1.768-1.768-1.414 1.414L10.586 14l-1.768 1.768 1.414 1.414L12 15.414l1.768 1.768 1.414-1.414L13.414 14zM9 4v2h6V4H9z" />
-                                        </g>
+                                    class="text-blue-600 hover:text-blue-900">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z">
+                                        </path>
                                     </svg>
-                                    <span class="text-xs px-1">Eliminar</span>
+                                </button>
+                                <button classs="text-red-600 hover:text-red-900" type="button"
+                                    wire:click="preDelete({{ $project->id }})" class="text-red-600 hover:text-red-900">
+                                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16">
+                                        </path>
+                                    </svg>
                                 </button>
                             </div>
                         </td>

@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "01320bb4f71d208b66975e1f8ae86319",
+    "content-hash": "745bf8e660851c67dd32090d872cb128",
     "packages": [
         {
             "name": "arnoldwamae/livewire-alert",
