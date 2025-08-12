@@ -64,7 +64,6 @@ class TaskManager extends Component
 
     public function mount()
     {
-        // Set default project if only one exists
         $projects = Project::all();
         if ($projects->count() === 1) {
             $this->project_id = $projects->first()->id;
@@ -91,8 +90,8 @@ class TaskManager extends Component
         // Apply search
         if ($this->search) {
             $query->where(function ($q) {
-                $q->where('title', 'like', '%' . $this->search . '%')
-                    ->orWhere('description', 'like', '%' . $this->search . '%');
+                $q->where('title', 'ilike', '%' . $this->search . '%')
+                    ->orWhere('description', 'ilike', '%' . $this->search . '%');
             });
         }
 
@@ -129,24 +128,28 @@ class TaskManager extends Component
         }
     }
 
-    public function clearFilters()
+    public function clearFilters(): void
     {
         $this->reset(['filterStatus', 'filterPriority', 'filterProject', 'filterAssignee', 'search']);
     }
 
-    public function showCreateForm()
+    public function backToProjects(): void
+    {
+        $this->redirect('/projects');
+    }
+    public function showCreateForm(): void
     {
         $this->showCreateForm = true;
         $this->resetForm();
     }
 
-    public function hideCreateForm()
+    public function hideCreateForm(): void
     {
         $this->showCreateForm = false;
         $this->resetForm();
     }
 
-    public function createTask()
+    public function createTask(): void
     {
         $this->validate();
 
@@ -164,7 +167,7 @@ class TaskManager extends Component
         session()->flash('message', 'Task created successfully!');
     }
 
-    public function editTask($taskId)
+    public function editTask($taskId): void
     {
         $task = Task::findOrFail($taskId);
 
@@ -180,7 +183,7 @@ class TaskManager extends Component
         $this->showEditForm = true;
     }
 
-    public function updateTask()
+    public function updateTask(): void
     {
         $this->validate();
 
@@ -199,28 +202,28 @@ class TaskManager extends Component
         session()->flash('message', 'Task updated successfully!');
     }
 
-    public function hideEditForm()
+    public function hideEditForm(): void
     {
         $this->showEditForm = false;
         $this->resetForm();
         $this->editingTaskId = null;
     }
 
-    public function deleteTask($taskId)
+    public function deleteTask($taskId): void
     {
         Task::findOrFail($taskId)->delete();
         $this->alert('');
         session()->flash('message', 'Task deleted successfully!');
     }
 
-    public function updateTaskStatus($taskId, $status)
+    public function updateTaskStatus($taskId, $status): void
     {
         $task = Task::findOrFail($taskId);
         $task->update(['status' => $status]);
         session()->flash('message', 'Task status updated!');
     }
 
-    private function resetForm()
+    private function resetForm(): void
     {
         $this->reset(['title', 'description', 'status', 'priority', 'assignee_id', 'due_date']);
         $this->status = 'todo';
