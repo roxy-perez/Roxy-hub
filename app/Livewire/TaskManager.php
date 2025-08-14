@@ -13,6 +13,7 @@ use Jantinnerezo\LivewireAlert\LivewireAlert as LivewireAlertTrait;
 class TaskManager extends Component
 {
     use WithPagination;
+    use LivewireAlertTrait;
 
     // Task form properties
     #[Validate('required|string|max:255')]
@@ -35,6 +36,9 @@ class TaskManager extends Component
 
     #[Validate('nullable|date')]
     public $due_date = '';
+
+    #[Validate('nullable|string')]
+    public $comments = '';
 
     // UI state
     public $showCreateForm = false;
@@ -137,13 +141,13 @@ class TaskManager extends Component
     {
         $this->redirect('/projects');
     }
-    public function showCreateForm(): void
+    public function openCreateForm(): void
     {
         $this->showCreateForm = true;
         $this->resetForm();
     }
 
-    public function hideCreateForm(): void
+    public function closeCreateForm(): void
     {
         $this->showCreateForm = false;
         $this->resetForm();
@@ -161,10 +165,15 @@ class TaskManager extends Component
             'priority' => $this->priority,
             'assignee_id' => $this->assignee_id ?: null,
             'due_date' => $this->due_date ?: null,
+            'comments' => $this->comments ?: null,
         ]);
 
-        $this->hideCreateForm();
-        session()->flash('message', 'Task created successfully!');
+        $this->closeCreateForm();
+        $this->alert('success', '¡Tarea creada!', [
+            'text' => 'Tarea creada correctamente.',
+            'toast' => true,
+            'position' => 'top-end',
+        ]);
     }
 
     public function editTask($taskId): void
@@ -179,6 +188,7 @@ class TaskManager extends Component
         $this->priority = $task->priority;
         $this->assignee_id = $task->assignee_id;
         $this->due_date = $task->due_date?->format('Y-m-d');
+        $this->comments = $task->comments;
 
         $this->showEditForm = true;
     }
@@ -196,10 +206,15 @@ class TaskManager extends Component
             'priority' => $this->priority,
             'assignee_id' => $this->assignee_id ?: null,
             'due_date' => $this->due_date ?: null,
+            'comments' => $this->comments ?: null,
         ]);
 
         $this->hideEditForm();
-        session()->flash('message', 'Task updated successfully!');
+        $this->alert('success', '¡Tarea actualizada!', [
+            'text' => 'Tarea actualizada correctamente.',
+            'toast' => true,
+            'position' => 'top-end',
+        ]);
     }
 
     public function hideEditForm(): void
@@ -213,19 +228,27 @@ class TaskManager extends Component
     {
         Task::findOrFail($taskId)->delete();
         $this->alert('');
-        session()->flash('message', 'Task deleted successfully!');
+        $this->alert('success', '¡Tarea eliminada!', [
+            'text' => 'Tarea eleminada correctamente.',
+            'toast' => true,
+            'position' => 'top-end',
+        ]);
     }
 
     public function updateTaskStatus($taskId, $status): void
     {
         $task = Task::findOrFail($taskId);
         $task->update(['status' => $status]);
-        session()->flash('message', 'Task status updated!');
+        $this->alert('success', '¡Estado actualizado!', [
+            'text' => 'Estado de la tarea actualizado correctamente.',
+            'toast' => true,
+            'position' => 'top-end',
+        ]);
     }
 
     private function resetForm(): void
     {
-        $this->reset(['title', 'description', 'status', 'priority', 'assignee_id', 'due_date']);
+        $this->reset(['title', 'description', 'status', 'priority', 'assignee_id', 'due_date', 'comments']);
         $this->status = 'todo';
         $this->priority = 3;
 

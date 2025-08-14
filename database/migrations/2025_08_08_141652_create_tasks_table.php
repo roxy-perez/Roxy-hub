@@ -20,6 +20,7 @@ return new class extends Migration
             $table->tinyInteger('priority')->default(3);
             $table->foreignId('assignee_id')->nullable()->constrained('users');
             $table->date('due_date')->nullable();
+            $table->text('comments')->nullable();
             $table->timestamps();
         });
     }

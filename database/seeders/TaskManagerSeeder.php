@@ -85,6 +85,7 @@ class TaskManagerSeeder extends Seeder
                 'priority' => 2,
                 'assignee_id' => $allUsers->skip(1)->first()->id,
                 'due_date' => now()->addDays(7),
+                'comments' => 'Need to discuss with the design team',
             ],
             [
                 'title' => 'Implement User Authentication',
@@ -94,6 +95,7 @@ class TaskManagerSeeder extends Seeder
                 'priority' => 1,
                 'assignee_id' => $allUsers->skip(2)->first()->id,
                 'due_date' => now()->addDays(14),
+                'comments' => 'Need to discuss with the development team',
             ],
             [
                 'title' => 'Database Schema Design',
@@ -103,6 +105,7 @@ class TaskManagerSeeder extends Seeder
                 'priority' => 2,
                 'assignee_id' => $owner->id,
                 'due_date' => now()->subDays(3),
+                'comments' => '',
             ],
             [
                 'title' => 'Setup Payment Gateway',
